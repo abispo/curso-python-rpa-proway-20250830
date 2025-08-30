@@ -7,6 +7,7 @@ import os
 import sqlite3
 
 from sqlite3 import Connection
+from openpyxl import Workbook
 
 def criar_banco_de_dados(conn: Connection):
 
@@ -68,6 +69,37 @@ def salvar_dados_na_tabela(conn: Connection, nome_arquivo: str, arquivo_csv: csv
         cursor.execute(sql, (sensor_id, linha.get('valor')))
         conn.commit()
         
+def gerar_planilha(conn: Connection):
+    
+    wb = Workbook()
+    cursor = conn.cursor()
+    wb.remove(wb.active)
+
+    result = cursor.execute("SELECT codigo FROM sensores ORDER BY codigo").fetchall()
+    for codigo in result:
+        ws = wb.create_sheet(title=codigo[0])
+
+        ws.append(["chuva", "temperatura", "umidade"])
+
+        sql = """
+            SELECT
+                s.codigo AS sensor,
+                c.valor AS chuva,
+                t.valor AS temperatura,
+                u.valor AS umidade
+            FROM sensores s
+            INNER JOIN leituras_chuva c
+                ON s.id = c.sensor_id
+            INNER JOIN leituras_temperatura t
+                ON s.id = t.sensor_id
+            INNER JOIN leituras_umidade u
+                ON s.id = u.sensor_id
+            ORDER BY s.codigo;"""
+        result = cursor.execute(sql).fetchall()
+
+        print(result)
+
+    wb.save(os.path.join(os.getcwd(), "dados_sensores.xlsx"))
 
 if __name__ == "__main__":
 
@@ -87,8 +119,9 @@ if __name__ == "__main__":
 
     for caminho, _, arquivos in os.walk(pasta_arquivos):
         for arquivo in arquivos:
-
             with open(os.path.join(caminho, arquivo), 'r', encoding="utf-8") as _arquivo:
 
                 arquivo_csv = csv.DictReader(_arquivo, delimiter=';')
                 salvar_dados_na_tabela(conexao, arquivo, arquivo_csv)
+
+    gerar_planilha(conn=conexao)
