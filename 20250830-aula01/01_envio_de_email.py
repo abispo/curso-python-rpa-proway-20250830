@@ -83,9 +83,6 @@ if __name__ == "__main__":
     pasta_arquivos = os.path.join(os.getcwd(), "sensores_dia")
     arquivo_zip = f"sensores_data_{datetime.now().strftime('%Y%m%d')}"
 
-    variavel = 1
-    variavel = "Python"
-
     arquivos: List[str] = []
 
     for caminho, _, arquivos in os.walk(pasta_arquivos):
