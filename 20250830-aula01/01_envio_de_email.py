@@ -13,19 +13,61 @@ def criar_banco_de_dados(conn: Connection):
     cursor = conn.cursor()
 
     sql = """
-CREATE TABLE IF NOT EXISTS sensores(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    codigo TEXT UNIQUE NOT NULL,
-    leitura_chuva TEXT NULL,
-    leitura_temperatura TEXT NULL,
-    leitura_umidade TEXT NULL
-);"""
-
+    CREATE TABLE IF NOT EXISTS sensores(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        codigo TEXT UNIQUE NOT NULL
+    );"""
     cursor.execute(sql)
 
-def salvar_dados_na_tabela(conn: Connection, nome_arquivo: str):
+    sql = """CREATE TABLE IF NOT EXISTS leituras_chuva(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sensor_id INTEGER NOT NULL,
+        valor TEXT NULL,
+        FOREIGN KEY(sensor_id) REFERENCES sensores(id)
+    );"""
+    cursor.execute(sql)
+
+    sql = """CREATE TABLE IF NOT EXISTS leituras_temperatura(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sensor_id INTEGER NOT NULL,
+        valor TEXT NULL,
+        FOREIGN KEY(sensor_id) REFERENCES sensores(id)
+    );"""
+    cursor.execute(sql)
+
+    sql = """CREATE TABLE IF NOT EXISTS leituras_umidade(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sensor_id INTEGER NOT NULL,
+        valor TEXT NULL,
+        FOREIGN KEY(sensor_id) REFERENCES sensores(id)
+    );
+    """
+    cursor.execute(sql)
+
+def salvar_dados_na_tabela(conn: Connection, nome_arquivo: str, arquivo_csv: csv.DictReader):
     
-    codigo_sensor, tipo_leitura, _ = arquivo.split("_")
+    codigo_sensor, tipo_leitura, _ = nome_arquivo.split("_")
+    cursor = conn.cursor()
+
+    sql = f"SELECT id, codigo FROM sensores"
+    result = cursor.execute(sql).fetchall()
+
+    dicionario_sensores = {}
+
+    for item in result:
+        dicionario_sensores.update({item[1]: item[0]})
+
+    for linha in arquivo_csv:
+        if codigo_sensor not in dicionario_sensores.keys():
+            cursor.execute(f"INSERT INTO sensores(codigo) VALUES (?)", (codigo_sensor,))
+            conn.commit()
+            dicionario_sensores.update({codigo_sensor: cursor.lastrowid})
+
+        sensor_id = dicionario_sensores.get(codigo_sensor)
+        sql = f"INSERT INTO leituras_{tipo_leitura}(sensor_id, valor) VALUES (?, ?)"
+        cursor.execute(sql, (sensor_id, linha.get('valor')))
+        conn.commit()
+        
 
 if __name__ == "__main__":
 
@@ -36,7 +78,7 @@ if __name__ == "__main__":
 
     conexao = sqlite3.connect(connection_string)
 
-    criar_banco_de_dados()
+    criar_banco_de_dados(conexao)
     
     pasta_arquivos = os.path.join(os.getcwd(), "sensores_dia")
     arquivo_zip = f"sensores_data_{datetime.now().strftime('%Y%m%d')}"
@@ -48,4 +90,8 @@ if __name__ == "__main__":
 
     for caminho, _, arquivos in os.walk(pasta_arquivos):
         for arquivo in arquivos:
-            salvar_dados_na_tabela(conexao, arquivo)
+
+            with open(os.path.join(caminho, arquivo), 'r', encoding="utf-8") as _arquivo:
+
+                arquivo_csv = csv.DictReader(_arquivo, delimiter=';')
+                salvar_dados_na_tabela(conexao, arquivo, arquivo_csv)
