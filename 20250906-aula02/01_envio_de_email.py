@@ -55,10 +55,10 @@ def gerar_planilha(conn: Connection):
 
         sql = """
             SELECT
+                data_hora,
                 leitura_chuva,
                 leitura_temperatura,
-                leitura_umidade,
-                data_hora
+                leitura_umidade
             FROM leituras_sensores
             WHERE codigo_sensor = ?"""
 
