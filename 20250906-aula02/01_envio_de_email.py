@@ -9,8 +9,10 @@ import sqlite3
 import zipfile
 
 from dotenv import load_dotenv
+from email import encoders
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
 from sqlite3 import Connection
 from openpyxl import Workbook
 
@@ -102,6 +104,17 @@ Sistema de monitoramento"""
     smtp_user = os.getenv("SMTP_USER")
     smtp_password = os.getenv("SMTP_PASSWORD")
 
+    with open(arquivo_anexo, 'rb') as anexo:
+        parte = MIMEBase("application", "octet-stream")
+        parte.set_payload(anexo.read())
+
+    encoders.encode_base64(parte)
+    parte.add_header(
+        "Content-Disposition",
+        f"attachment; filename={arquivo_anexo}"
+        )
+    mensagem.attach(parte)
+
     try:
         with smtplib.SMTP(host=smtp_host, port=smtp_port) as smtp_server:
             smtp_server.starttls()
@@ -137,4 +150,4 @@ if __name__ == "__main__":
 
     gerar_planilha(conn=conexao)
     compactar_arquivo(caminho_arquivo="dados_sensores.xlsx")
-    enviar_email(arquivo_anexo="dados_sensores.xlsx")
+    enviar_email(arquivo_anexo="dados_sensores.zip")
