@@ -4,11 +4,17 @@ from typing import List
 
 import csv
 import os
+import smtplib
 import sqlite3
 import zipfile
 
+from dotenv import load_dotenv
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from sqlite3 import Connection
 from openpyxl import Workbook
+
+load_dotenv()
 
 def criar_banco_de_dados(conn: Connection):
 
@@ -77,6 +83,38 @@ def compactar_arquivo(caminho_arquivo: str):
     with zipfile.ZipFile(arquivo_saida, 'w', compression=zipfile.ZIP_DEFLATED) as zfile:
         zfile.write(caminho_arquivo, arcname=os.path.basename(caminho_arquivo))
 
+def enviar_email(arquivo_anexo: str):
+    
+    mensagem = MIMEMultipart()
+    mensagem["From"] = "monitoramento@empresa.com.br"
+    mensagem["To"] = "gestor@empresa.com.br"
+    mensagem["Subject"] = "Dados de monitoramento"
+
+    corpo_mensagem = """
+Olá! Segue em anexo a planilha com os dados de monitoramento
+
+---
+Sistema de monitoramento"""
+    mensagem.attach(MIMEText(corpo_mensagem, "plain"))
+
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_port = os.getenv("SMTP_PORT")
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+
+    try:
+        with smtplib.SMTP(host=smtp_host, port=smtp_port) as smtp_server:
+            smtp_server.starttls()
+            smtp_server.login(user=smtp_user, password=smtp_password)
+            smtp_server.sendmail(
+                mensagem["From"],
+                mensagem["To"],
+                mensagem.as_string()
+            )
+    except Exception as e:
+        print(f"Erro ao se conectar ao servidor SMTP: {e}.")
+
+
 if __name__ == "__main__":
 
     connection_string = os.path.join(os.getcwd(), "db.sqlite3")
@@ -99,3 +137,4 @@ if __name__ == "__main__":
 
     gerar_planilha(conn=conexao)
     compactar_arquivo(caminho_arquivo="dados_sensores.xlsx")
+    enviar_email(arquivo_anexo="dados_sensores.xlsx")
