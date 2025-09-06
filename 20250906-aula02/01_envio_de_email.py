@@ -5,6 +5,7 @@ from typing import List
 import csv
 import os
 import sqlite3
+import zipfile
 
 from sqlite3 import Connection
 from openpyxl import Workbook
@@ -70,6 +71,12 @@ def gerar_planilha(conn: Connection):
 
     wb.save(os.path.join(os.getcwd(), "dados_sensores.xlsx"))
 
+def compactar_arquivo(caminho_arquivo: str):
+    arquivo_saida = "dados_sensores.zip"
+
+    with zipfile.ZipFile(arquivo_saida, 'w', compression=zipfile.ZIP_DEFLATED) as zfile:
+        zfile.write(caminho_arquivo, arcname=os.path.basename(caminho_arquivo))
+
 if __name__ == "__main__":
 
     connection_string = os.path.join(os.getcwd(), "db.sqlite3")
@@ -91,3 +98,4 @@ if __name__ == "__main__":
         salvar_dados_na_tabela(conexao, arquivo_leituras, arquivo_csv)
 
     gerar_planilha(conn=conexao)
+    compactar_arquivo(caminho_arquivo="dados_sensores.xlsx")
