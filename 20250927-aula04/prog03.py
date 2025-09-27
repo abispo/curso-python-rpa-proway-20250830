@@ -25,11 +25,15 @@ if __name__ == "__main__":
     # Encontrando um elemento pelo id
     driver.get("https://www.proway.com.br/")
 
+    # Espera ímplicita
+    driver.implicitly_wait(3)
+
     text_busca = driver.find_element(By.ID, "termoBuscaCurso")
     sleep(1)
     text_busca.send_keys("Python")
     text_busca.send_keys(Keys.ENTER)
 
+    # Espera explícita
     link_moda_textil = WebDriverWait(driver, 15).until(
         EC.presence_of_element_located((By.LINK_TEXT, "Moda e Têxtil"))
     )
