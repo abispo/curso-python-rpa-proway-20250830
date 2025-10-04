@@ -7,6 +7,7 @@ import datetime
 from time import sleep
 
 pyautogui.PAUSE = 1.5
+pyautogui.FAILSAFE = True
 
 if __name__ == "__main__":
     # Abrindo a janela executar do windows
@@ -49,7 +50,9 @@ if __name__ == "__main__":
     sleep(1)
 
     # Aqui é tirado um screenshot da tela, e depois o notepad é fechado
-    pyautogui.screenshot(f"{data_hora}_evidencia.png")
+    pyautogui.screenshot(
+        f"{data_hora}_evidencia.png",
+        region=(100, 100, 480, 480))
     sleep(1)
     keyboard.press_and_release("alt+f4")
 
