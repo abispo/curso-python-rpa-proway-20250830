@@ -2,7 +2,11 @@
 
 import pyautogui
 
+# Define um intervalo padrão de 1 segundo e meio entre as chamadas do pyautogui
 pyautogui.PAUSE = 1.5
+
+# Caso o mouse seja movido para o canto superior esquerdo da tela, será lançada a exceção FailSafeException
+pyautogui.FAILSAFE = True
 
 if __name__ == "__main__":
     # Pegar o tamanho atual da tela
