@@ -219,3 +219,5 @@ __marimo__/
 *.exe
 
 whatsapp_automation/
+node_modules/
+sessions/
