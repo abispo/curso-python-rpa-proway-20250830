@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 from telegram import Update, Bot
 from telegram.ext import ApplicationBuilder, CallbackContext, CommandHandler
-from asyncio import Queue
 
 import os
 import datetime
